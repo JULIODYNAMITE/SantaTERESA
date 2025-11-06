@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Teresa | Mayorista de Alimentos y Limpieza</title>
+    <!-- Incluyendo Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de la fuente Inter -->
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f6f8; /* El fondo de la página */
+        }
+        /* Clase para simular el sombreado de Makro en los productos */
+        .product-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        /* Estilo para el botón de compra */
+        .btn-add {
+            background-color: #C53030;
+            transition: background-color 0.2s;
+        }
+        .btn-add:hover {
+            background-color: #9B2C2C;
+        }
+        
+        /* ESTILOS ADICIONALES PARA EL LOGO */
+        .logo-container {
+            transition: all 0.3s ease-in-out;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 0.5rem; /* p-2 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Sombra inicial sutil */
+        }
+        .logo-container:hover {
+            /* Efecto de levantamiento y sombra más profunda */
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(197, 48, 48, 0.2); /* Sombra roja sutil al hacer hover */
+            background-color: #fff;
+        }
+
+        /* Estilo para el encabezado retráctil */
+        #main-header {
+            /* Transición para el movimiento fuera/dentro de la pantalla */
+            transition: transform 0.3s ease-in-out, visibility 0s; 
+            /* Para que pueda ocultarse completamente */
+            transform: translateY(0); 
+        }
+        /* CLASE ACTUALIZADA para ocultar el encabezado completamente */
+        .header-hidden {
+            /* Garantiza que se mueva más allá de la pantalla, incluso si el cálculo de -100% es ambiguo */
+            transform: translateY(-110%);
+            /* Oculta la visibilidad y deshabilita clics para liberar el espacio */
+            visibility: hidden; 
+            pointer-events: none;
+            /* Asegura que la visibilidad se aplique después de la transición de movimiento */
+            transition: transform 0.3s ease-in-out, visibility 0s 0.3s;
+        }
+
+        /* La barra de búsqueda se mantiene visible en su estado encogido cuando se vuelve a subir */
+        .scrolled-search {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+
+        /* ESTILOS PARA EL MODAL DE IMAGEN (LIGHTBOX) */
+        #image-modal {
+            background-color: rgba(0, 0, 0, 0.9); /* Fondo oscuro semitransparente */
+            transition: opacity 0.3s ease-in-out;
+        }
+        #modal-content {
+            cursor: zoom-out; /* Indica que se puede cerrar o alejar */
+        }
+        #modal-image {
+            transition: transform 0.3s ease-in-out;
+            cursor: grab;
+            max-height: 90vh; /* Para que la imagen no sea más grande que la pantalla */
+            max-width: 90vw;
+        }
+        /* Estilo para el botón de cerrar */
+        #close-modal {
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: background-color 0.2s;
+        }
+        #close-modal:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar Fija - Ahora con ID para manipulación en JS -->
+    <header id="main-header" class="sticky top-0 z-50 bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- El flex container interno tiene la altura inicial y transición -->
+            <div id="header-content" class="flex justify-between items-center h-36 transition-all duration-300"> 
+                <!-- Logo -->
+                <a href="#" class="flex items-center logo-container"> 
+                    <!-- La imagen del logo tiene su ID y transición para encogerse -->
+                    <img id="logo-img" src="https://i.postimg.cc/fyw4t77g/santa-teresa-2.png" alt="Logo Santa Teresa" class="h-32 w-auto transition-all duration-300"> 
+                </a>
+
+                <!-- Barra de Búsqueda (Desktop) - Se añade ID para manipulación -->
+                <div id="search-bar-desktop-container" class="hidden lg:block flex-grow max-w-xl mx-8 transition-all duration-300">
+                    <input type="text" placeholder="Buscar productos, marcas o categorías..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <!-- Botones de Acción -->
+                <nav class="flex items-center space-x-4">
+                    <!-- Ingreso/Registro -->
+                    <button class="text-gray-700 hover:text-red-600 hidden sm:flex items-center space-x-1 p-2 rounded-lg transition duration-150">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-sm font-medium hidden md:inline">Ingresar</span>
+                    </button>
+                    <!-- Carrito de Compras -->
+                    <button id="cart-button" class="relative text-gray-700 hover:text-red-600 p-2 rounded-lg transition duration-150">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span id="cart-count" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">0</span>
+                    </button>
+                    <!-- Menú Móvil (Hamburguesa) -->
+                    <button class="lg:hidden text-gray-700 hover:text-red-600 p-2 rounded-lg transition duration-150">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </nav>
+            </div>
+        </div>
+        <!-- Barra de Búsqueda (Móvil) -->
+        <div id="search-bar-mobile" class="lg:hidden p-4 border-t border-gray-100 transition-all duration-300">
+            <input type="text" placeholder="Buscar productos, marcas o categorías..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- 1. Carrusel de Ofertas (Simulación) -->
+<section class="mb-12">
+            <div class="relative bg-white p-6 rounded-xl shadow-lg overflow-hidden">
+                <div class="flex justify-between items-center bg-red-600 p-4 rounded-t-xl text-white">
+                    <h2 class="text-2xl font-bold uppercase">¡OFERTAS DE LA SEMANA!</h2>
+                    <span class="text-sm font-medium">Hasta 40% de descuento</span>
+                </div>
+                <!-- Simulación de un elemento de carrusel -->
+                <div class="p-6 md:flex items-center">
+                    <div class="md:w-1/3 mb-4 md:mb-0">
+                        <img src="https://placehold.co/400x300/FEE2E2/B91C1C?text=Makro+Ahorro" alt="Oferta Destacada" class="rounded-lg shadow-xl w-full">
+                    </div>
+                    <div class="md:w-2/3 md:pl-8">
+                        <p class="text-red-600 font-semibold mb-2 text-lg">Gran Promoción Mayorista</p>
+                        <h3 class="text-4xl font-extrabold text-gray-800 mb-4">Aceite de Cocina 5L</h3>
+                        <p class="text-gray-600 mb-6">Lleva 6 unidades o más y obtén un precio especial por bidón. ¡Ideal para tu negocio de restauración!</p>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-3xl font-bold text-red-600">S/ 45.90</span>
+                            <span class="text-xl text-gray-400 line-through">S/ 55.90</span>
+                        </div>
+                        <button class="mt-6 px-6 py-3 btn-add text-white font-semibold rounded-lg shadow-md hover:shadow-lg">
+                            Ver Oferta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Menú de Categorías (Vertical en Desktop, Horizontal en Mobile) -->
+<section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Explorar Categorías</h2>
+            <div id="categories-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                <!-- Las categorías serán inyectadas por JS para dinamismo -->
+</div>
+        </section>
+
+        <!-- 2.5. Presentación de Marca Destacada: VEESPER (Cuidado Personal) -->
+        <section class="mb-12">
+            <div class="relative bg-pink-50 p-6 md:p-10 rounded-xl shadow-xl border-l-8 border-pink-600 overflow-hidden">
+                <div class="md:flex items-center">
+                    <!-- Columna de Imagen -->
+                    <div class="md:w-1/3 mb-6 md:mb-0 md:pr-8 flex justify-center">
+                        <!-- Contenedor Flexible: Carrusel horizontal en móvil, grid wrap en desktop -->
+                        <div class="flex space-x-3 overflow-x-auto p-2 w-full max-w-lg md:grid md:grid-cols-3 md:gap-4 md:space-x-0 md:overflow-visible md:max-w-none">
+                            
+                            <!-- Toallitas Húmedas Veesper -->
+                            <img src="https://i.postimg.cc/rpm0rmLj/toallitas-humedas.jpg" alt="Toallitas Húmedas Veesper" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-400 aspect-square">
+
+                            <!-- Toallas Higiénicas Veesper (NUEVO) -->
+                            <img src="https://i.postimg.cc/x1FjB3W2/toallas-higienicas-1.jpg" alt="Toallas Higiénicas Veesper" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-400 aspect-square">
+                            
+                            <!-- Pañal 1 (RN/P) -->
+                            <img src="https://i.postimg.cc/Tw60xgbf/panales1.jpg" alt="Pañal Veesper Talla RN/P" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-200 aspect-square">
+                            <!-- Pañal 2 (M) -->
+                            <img src="https://i.postimg.cc/Kjc5kbQP/panales-2.jpg" alt="Pañal Veesper Talla M" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-200 aspect-square">
+
+                            <!-- Pañal 3 (G) -->
+                            <img src="https://i.postimg.cc/CL1NwFRh/panales4.jpg" alt="Pañal Veesper Talla G" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-200 aspect-square">
+                                
+                            <!-- Pañal 4 (XG) -->
+                            <img src="https://i.postimg.cc/3x0FDnCk/panales-5.jpg" alt="Pañal Veesper Talla XG" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-200 aspect-square">
+                                
+                            <!-- Pañal 5 (XXG) -->
+                            <img src="https://i.postimg.cc/MGy09HFh/panales-6.jpg" alt="Pañal Veesper Talla XXG" 
+                                class="flex-shrink-0 w-28 h-28 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-pink-200 aspect-square">
+                        </div>
+                    </div>
+                    
+                    <!-- Columna de Texto y Descripción -->
+                    <div class="md:w-2/3">
+                        <div class="flex items-center mb-4">
+                            <span class="text-4xl mr-3">✨</span>
+                            <h2 class="text-4xl font-extrabold text-pink-700">VEESPER</h2>
+                            <span class="ml-4 text-sm font-bold text-pink-500 bg-pink-100 px-3 py-1 rounded-full uppercase hidden sm:inline-block">¡Línea Completa!</span>
+                        </div>
+                        
+                        <!-- Descripción actualizada para incluir toallas higiénicas -->
+                        <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                            Veesper ofrece pañales ultra absorbentes y suaves para bebés, disponibles en **todas las tallas (RN/P a XXG)**. Además, contamos con sus **Toallitas Húmedas Hipoalergénicas** y las **Toallas Higiénicas Femeninas** de alta calidad y absorción superior, cubriendo todas las necesidades de cuidado personal.
+                        </p>
+                        
+                        <p class="text-sm font-semibold text-gray-500 mb-4">
+                            Encuentra todas las tallas y presentaciones en nuestra categoría: <span class="text-pink-600 font-bold">Cuidado Personal y Bebés</span>.
+                        </p>
+
+                        <!-- BOTÓN ACTUALIZADO: Llamada a filterProducts('Cuidado Personal') -->
+                        <button onclick="filterProducts('Cuidado Personal')" class="px-6 py-3 bg-pink-600 text-white font-bold rounded-lg shadow-md hover:bg-pink-700 transition duration-200">
+                            Comprar Productos Veesper
+                        </button>
+                    </div>
+                </div>
+                <!-- Icono decorativo de fondo -->
+                <div class="absolute top-0 right-0 p-4 opacity-10 hidden sm:block">
+                    <span class="text-8xl">👶</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2.6. Presentación de Marca Destacada: DOFFI (Limpieza) -->
+        <section class="mb-12">
+            <div class="relative bg-teal-50 p-6 md:p-10 rounded-xl shadow-xl border-l-8 border-teal-600 overflow-hidden">
+                <div class="md:flex items-center">
+                    
+                    <!-- Columna de Texto y Descripción -->
+                    <div class="md:w-1/2 md:pr-8">
+                        <div class="flex items-center mb-4">
+                            <span class="text-4xl mr-3">🫧</span>
+                            <h2 class="text-4xl font-extrabold text-teal-700">DOFFI <span class="text-xl text-teal-500">(¡Nuevo!)</span></h2>
+                            <span class="ml-4 text-sm font-bold text-teal-500 bg-teal-100 px-3 py-1 rounded-full uppercase hidden sm:inline-block">Detergentes en Polvo y Líquido</span>
+                        </div>
+                        
+                        <!-- Descripción actualizada -->
+                        <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                            **DOFFI** es la nueva marca con una fórmula de **Máximo Poder** que garantiza la máxima eficiencia y rendimiento en limpieza pesada. Ideal para negocios, lavanderías y altos volúmenes.
+                        </p>
+                        
+                        <!-- Lista de productos DOFFI actualizada con los nuevos pesos (Kg y gr) -->
+                        <ul class="list-disc list-inside text-gray-600 mb-6 space-y-2">
+                            <li>Detergente Líquido **Ultra-Concentrado** (Bidón 5L)</li>
+                            <li>Detergente en Polvo **Máximo Poder**: ¡Múltiples Presentaciones (140gr hasta 15Kg)!</li>
+                            <li>Cloro/Lejía Industrial de Alto Rendimiento</li>
+                        </ul>
+
+                        <!-- BOTÓN ACTUALIZADO: Llamada a filterProducts('Limpieza') -->
+                        <button onclick="filterProducts('Limpieza')" class="px-6 py-3 bg-teal-600 text-white font-bold rounded-lg shadow-md hover:bg-teal-700 transition duration-200">
+                            Ver toda la Línea Doffi
+                        </button>
+                    </div>
+
+                    <!-- Columna de Imagen (Detergentes - AHORA CON LAS 7 IMÁGENES) -->
+                    <div class="md:w-1/2 mb-6 md:mb-0 flex justify-center">
+                        <div class="flex space-x-3 overflow-x-auto p-2 w-full max-w-lg md:grid md:grid-cols-4 md:gap-2 md:space-x-0 md:overflow-visible md:max-w-none">
+                            
+                            <!-- Imagen 1: Corregida a 4Kg -->
+                            <img src="https://i.postimg.cc/mkw19FhX/deter-1.jpg" alt="Detergente Doffi 4Kg" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+                            
+                            <!-- Imagen 2: Corregida a 500gr -->
+                            <img src="https://i.postimg.cc/P5cp1Hf3/deter2.jpg" alt="Detergente Doffi 500gr" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+                                
+                            <!-- Imagen 3: Corregida a 140gr -->
+                            <img src="https://i.postimg.cc/JhkyqFGr/deter3.jpg" alt="Detergente Doffi 140gr" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+
+                            <!-- Imagen 4: Corregida a 2Kg -->
+                            <img src="https://i.postimg.cc/SsbntGMY/deter4.jpg" alt="Detergente Doffi 2Kg" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+                                
+                            <!-- Imagen 5: Corregida a 1Kg -->
+                            <img src="https://i.postimg.cc/cH7vq8Rm/deter5.jpg" alt="Detergente Doffi 1Kg" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+                                
+                            <!-- Imagen 6: Corregida a 15Kg -->
+                            <img src="https://i.postimg.cc/wv51Ks5j/deter6.jpg" alt="Detergente Doffi 15Kg" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+
+                            <!-- Imagen 7: Corregida a 15Kg -->
+                            <img src="https://i.postimg.cc/T1Ch1M48/deter7.jpg" alt="Detergente Doffi 15Kg (Refuerzo)" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-400 aspect-square p-1">
+                            
+                            <!-- Detergente Doffi Líquido (Bidón, lo dejamos para complementar) -->
+                            <img src="https://i.postimg.cc/Qx0Xq0n5/detergente-liquido.jpg" alt="Detergente Líquido Doffi 5L" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-teal-200 aspect-square p-1">
+                        </div>
+                        <!-- Texto para indicar que se desliza en móvil -->
+                        <p class="text-xs text-gray-500 mt-2 italic md:hidden">Desliza para ver todas las presentaciones de Doffi</p>
+
+                    </div>
+                </div>
+                <!-- Icono decorativo de fondo -->
+                <div class="absolute top-0 right-0 p-4 opacity-10 hidden sm:block">
+                    <span class="text-8xl">🧺</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2.7. Presentación de Marca Destacada: PAPEL PARA TODA OCASIÓN (Papeles) -->
+        <section class="mb-12">
+            <div class="relative bg-amber-50 p-6 md:p-10 rounded-xl shadow-xl border-l-8 border-amber-600 overflow-hidden">
+                <div class="md:flex items-center">
+                    
+                    <!-- Columna de Texto y Descripción -->
+                    <div class="md:w-1/2 md:pr-8 order-2 md:order-1">
+                        <div class="flex items-center mb-4">
+                            <span class="text-4xl mr-3">🧻</span>
+                            <h2 class="text-4xl font-extrabold text-amber-700">PAPEL PARA TODA OCASIÓN</h2>
+                            <span class="ml-4 text-sm font-bold text-amber-500 bg-amber-100 px-3 py-1 rounded-full uppercase hidden sm:inline-block">¡Línea Institucional y Hogar!</span>
+                        </div>
+                        
+                        <!-- Descripción de la nueva marca Papel para Toda Ocasión -->
+                        <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                            Nuestra línea de **Papel para Toda Ocasión** es tu solución completa en productos de papel. Ofrecemos la mejor relación calidad-precio en **Papel Higiénico** y **Papel Toalla**, con presentaciones ideales para el hogar, oficinas y grandes instituciones.
+                        </p>
+                        
+                        <!-- Lista de productos -->
+                        <ul class="list-disc list-inside text-gray-600 mb-6 space-y-2">
+                            <li>Papel Higiénico: Rollo Jumbo, Institucional y Paquetes Familiares.</li>
+                            <li>Papel Toalla: Rollos de Cocina Ultra-Absorbentes y Toallas Interfoliadas Z.</li>
+                            <li>Alta resistencia y metraje garantizado.</li>
+                        </ul>
+
+                        <!-- BOTÓN ACTUALIZADO: Llamada a filterProducts('Papeles') -->
+                        <button onclick="filterProducts('Papeles')" class="px-6 py-3 bg-amber-600 text-white font-bold rounded-lg shadow-md hover:bg-amber-700 transition duration-200">
+                            Comprar toda la Línea de Papel
+                        </button>
+                    </div>
+                    
+                    <!-- Columna de Imagen (Papeles - Las 14 imágenes proporcionadas) -->
+                    <div class="md:w-1/2 mb-6 md:mb-0 flex justify-center order-1 md:order-2">
+                        <div class="flex space-x-3 overflow-x-auto p-2 w-full max-w-lg md:grid md:grid-cols-4 md:gap-2 md:space-x-0 md:overflow-visible md:max-w-none">
+                            
+                            <!-- Papel Higiénico (Primeras 4) -->
+                            <img src="https://i.postimg.cc/cJ3RHhyb/ph1.jpg" alt="Papel Higiénico Paracas Celeste" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-400 aspect-square p-1">
+                            <img src="https://i.postimg.cc/pTtDnjPr/ph2.jpg" alt="Papel Higiénico Pétalo 100 m" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-400 aspect-square p-1">
+                            <img src="https://i.postimg.cc/Y9fQNSS6/ph3.jpg" alt="Detergente Paracas" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-400 aspect-square p-1">
+                            <img src="https://i.postimg.cc/D0vLxKWD/ph4.jpg" alt="Papel Higiénico Pétalo 13 m" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-400 aspect-square p-1">
+                                
+                            <!-- Papel Toalla (Próximas 4) -->
+                            <img src="https://i.postimg.cc/vHSftkQs/ph8.jpg" alt="Papel Higiénico Pétalo 40 metros" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-200 aspect-square p-1">
+                            <img src="https://i.postimg.cc/XYGFHLJb/ph9.jpg" alt="Papel Toalla Paracas Multiuso" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-200 aspect-square p-1">
+                            <img src="https://i.postimg.cc/4xDcrc7m/ph10.jpg" alt="Papel Higiénico Paracas Naranja" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-200 aspect-square p-1">
+                            <img src="https://i.postimg.cc/pdKjxdKy/ph12.jpg" alt="Papel Higiénico Paracas Azul" 
+                                class="flex-shrink-0 w-24 h-24 md:w-full md:h-auto object-contain rounded-lg shadow-md border-2 border-amber-200 aspect-square p-1">
+                            
+                            <!-- Texto para indicar que se desliza en móvil -->
+                            <p class="text-xs text-gray-500 mt-2 italic col-span-4 md:hidden">Desliza para ver todas las presentaciones de Papel para Toda Ocasión</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Icono decorativo de fondo -->
+                <div class="absolute top-0 right-0 p-4 opacity-10 hidden sm:block">
+                    <span class="text-8xl">🧺</span>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 3. Productos Destacados (Simulación) -->
+<section id="products-section" class="mb-12">
+            <div class="flex items-center justify-between mb-6 border-b pb-2">
+                <h2 id="product-list-title" class="text-3xl font-bold text-gray-800">Todos Nuestros Productos</h2>
+                <!-- Botón para resetear el filtro -->
+                <button id="reset-filter-btn" onclick="filterProducts('Todos')" class="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-semibold text-sm hover:bg-red-200 transition duration-150 hidden">
+                    Mostrar Todos los Productos
+                </button>
+            </div>
+            
+            <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Las tarjetas de producto serán inyectadas por JS -->
+</div>
+        </section>
+        
+        <!-- Contenido de relleno para hacer scroll -->
+        <section class="mb-12 pt-10">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Productos Similares</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Harina 5Kg</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Arroz Bolsa Grande</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Fideos Pack</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Leche UHT Caja</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Gaseosa 3L</div>
+            </div>
+        </section>
+        <section class="mb-12 pt-10">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">Más de Limpieza</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Lavandina Concentrada</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Detergente en Polvo</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Ambientador (Pack)</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Bolsas de Basura</div>
+                <div class="bg-gray-100 p-4 rounded-lg h-32 flex items-center justify-center text-sm">Escobas y Trapeadores</div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <!-- Modal de Visualización de Imagen (Lightbox) -->
+    <!-- Inicialmente oculto y con alta Z-index -->
+    <div id="image-modal" class="fixed inset-0 z-[1000] flex items-center justify-center opacity-0 pointer-events-none" onclick="closeModal()">
+        
+        <!-- Contenido principal del modal -->
+        <div id="modal-content" class="relative max-w-full max-h-full p-4 flex flex-col items-center justify-center" onclick="event.stopPropagation()">
+            
+            <!-- Botón de Cerrar (X) -->
+            <button id="close-modal" class="absolute top-4 right-4 text-white text-3xl p-2 rounded-full z-[1001]" title="Cerrar (Escape)">
+                &times;
+            </button>
+            
+            <!-- Imagen (se inyectará la fuente aquí) -->
+            <img id="modal-image" src="" alt="Producto en Zoom" class="object-contain rounded-xl shadow-2xl transition-transform duration-300 transform" style="max-height: 90vh; max-width: 90vw;">
+
+            <!-- Detalles del Producto (Pie de Foto/Descripción) -->
+            <div id="modal-details" class="mt-4 p-4 rounded-lg bg-white/10 text-white backdrop-blur-sm w-full max-w-lg text-center shadow-lg">
+                <h3 class="text-2xl font-bold" id="detail-name"></h3>
+                <p class="text-sm italic" id="detail-unit"></p>
+                <p class="text-3xl font-extrabold text-red-400 mt-2" id="detail-price-mayor"></p>
+                <p class="text-xs mt-2 text-gray-300">Haz clic en el fondo oscuro para cerrar.</p>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <!-- Footer -->
+<footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+                <h4 class="font-bold text-lg mb-4 text-red-400">Santa Teresa</h4>
+                <ul class="space-y-2 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-white">Quiénes Somos</a></li>
+                    <li><a href="#" class="hover:text-white">Sucursales</a></li>
+                    <li><a href="#" class="hover:text-white">Trabaja con Nosotros</a></li>
+                    <li><a href="#" class="hover:text-white">Marcas Propias</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-4 text-red-400">Ayuda y Soporte</h4>
+                <ul class="space-y-2 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-white">Preguntas Frecuentes</a></li>
+                    <li><a href="#" class="hover:text-white">Términos y Condiciones</a></li>
+                    <li><a href="#" class="hover:text-white">Política de Devoluciones</a></li>
+                    <li><a href="#" class="hover:text-white">Contáctanos</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-4 text-red-400">Compra Online</h4>
+                <ul class="space-y-2 text-sm text-gray-400">
+                    <li><a href="#" class="hover:text-white">Formas de Pago</a></li>
+                    <li><a href="#" class="hover:text-white">Zonas de Reparto</a></li>
+                    <li><a href="#" class="hover:text-white">Compra Mayorista</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-4 text-red-400">Síguenos</h4>
+                <div class="flex space-x-3">
+                    <!-- Iconos de Redes Sociales (Simulación) -->
+                    <a href="#" class="text-gray-400 hover:text-white transition"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.258 1.948c-.891.398-1.839.664-2.83.774a4.986 4.986 0 00-3.468-1.375c-3.178 0-5.757 2.579-5.757 5.757v1.442c-4.579-.228-8.62-2.42-11.332-5.77a5.772 5.772 0 00-1.22 2.887c0 1.996 1.015 3.763 2.563 4.793a4.992 4.992 0 01-2.614-.725v.073c0 2.784 1.98 5.107 4.587 5.642a4.99 4.99 0 01-2.316.088c.731 2.28 2.853 3.945 5.372 3.988-1.977 1.547-4.471 2.47-7.185 2.47-.468 0-.93-.027-1.385-.081a9.982 9.982 0 005.4 1.583c6.476 0 10.007-5.367 10.007-10.008 0-.153-.003-.306-.01-.458a7.197 7.197 0 001.76-1.826z"></path></svg></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2 16h-2v-6h2v6zm-1-8.2c-.66 0-1.2-.54-1.2-1.2s.54-1.2 1.2-1.2 1.2.54 1.2 1.2-.54 1.2-1.2 1.2zm13 8.2h-2v-4.173c0-.987-.017-2.257-1.378-2.257-1.378 0-1.597 1.076-1.597 2.185v4.245h-2v-6h1.916v.831h.027c.268-.517.922-.888 1.902-.888 2.035 0 2.41 1.346 2.41 3.097v5.06h-1.928z"></path></svg></a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-700 py-4">
+            <p class="text-center text-sm text-gray-500">© 2025 Santa Teresa. Todos los derechos reservados. RUC: 20XXXXXXX13.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript para la funcionalidad dinámica y la simulación de productos -->
+<script>
+        // Array de categorías que solicitaste
+        const categories = [
+            { name: "Productos de Limpieza", short_name: "Limpieza", icon: "🧼", color: "bg-blue-100 text-blue-800" },
+            { name: "Papeles, Toallas y Descartables", short_name: "Papeles", icon: "🧻", color: "bg-amber-100 text-amber-800" }, 
+            { name: "Embutidos y Fiambres", short_name: "Embutidos", icon: "🥓", color: "bg-red-100 text-red-800" },
+            { name: "Cuidado Personal y Bebés", short_name: "Cuidado Personal", icon: "👶", color: "bg-pink-100 text-pink-800" },
+            { name: "Aceites de Cocina", short_name: "Aceites", icon: "🏺", color: "bg-yellow-100 text-yellow-800" },
+            { name: "Conservas (Atún, etc.)", short_name: "Conservas", icon: "🥫", color: "bg-green-100 text-green-800" },
+            { name: "Todos los Productos", short_name: "Todos", icon: "🛒", color: "bg-gray-200 text-gray-800" },
+        ];
+
+        // Array de productos de simulación 
+        const products = [
+            // --- PRODUCTOS DOFFI - Detergente en Polvo (Pesos corregidos) ---
+            { id: 16, name: "Doffi Detergente Polvo (4 Kg)", category: "Limpieza", price: 32.50, price_mayor: 28.00, unit: "Bolsa 4Kg Máximo Poder", stock: 150, img_url: "https://i.postimg.cc/mkw19FhX/deter-1.jpg" },
+            { id: 17, name: "Doffi Detergente Polvo (500 gr)", category: "Limpieza", price: 5.50, price_mayor: 4.50, unit: "Bolsa 500gr Máximo Poder", stock: 120, img_url: "https://i.postimg.cc/P5cp1Hf3/deter2.jpg" },
+            { id: 18, name: "Doffi Detergente Polvo (140 gr)", category: "Limpieza", price: 2.50, price_mayor: 1.90, unit: "Bolsa 140gr Máximo Poder", stock: 100, img_url: "https://i.postimg.cc/JhkyqFGr/deter3.jpg" },
+            { id: 19, name: "Doffi Detergente Polvo (2 Kg)", category: "Limpieza", price: 17.50, price_mayor: 15.00, unit: "Bolsa 2Kg Máximo Poder", stock: 90, img_url: "https://i.postimg.cc/SsbntGMY/deter4.jpg" },
+            { id: 20, name: "Doffi Detergente Polvo (1 Kg)", category: "Limpieza", price: 9.90, price_mayor: 8.50, unit: "Bolsa 1Kg Máximo Poder", stock: 80, img_url: "https://i.postimg.cc/cH7vq8Rm/deter5.jpg" },
+            { id: 21, name: "Doffi Detergente Polvo (15 Kg)", category: "Limpieza", price: 99.00, price_mayor: 85.00, unit: "Saco 15Kg Máximo Poder", stock: 75, img_url: "https://i.postimg.cc/wv51Ks5j/deter6.jpg" },
+            { id: 22, name: "Doffi Detergente Polvo (15 Kg)", category: "Limpieza", price: 99.00, price_mayor: 85.00, unit: "Saco 15Kg Máximo Poder (Refuerzo)", stock: 70, img_url: "https://i.postimg.cc/T1Ch1M48/deter7.jpg" },
+            
+            // Productos DOFFI - Líquido y Cloro
+            { id: 13, name: "Doffi Detergente Líquido", category: "Limpieza", price: 39.90, price_mayor: 34.00, unit: "Bidón 5L Ultra Concentrado", stock: 60, img_url: "https://i.postimg.cc/Qx0Xq0n5/detergente-liquido.jpg" },
+            { id: 15, name: "Doffi Cloro Industrial", category: "Limpieza", price: 25.00, price_mayor: 21.00, unit: "Botella 4L Alto Rendimiento", stock: 70, img_url: null },
+            
+            // --- PRODUCTOS PAPEL PARA TODA OCASIÓN (Nuevos Nombres) ---
+            // Papel Higiénico (7)
+            { id: 23, name: "Papel Higiénico Paracas Celeste", category: "Papeles", price: 45.90, price_mayor: 39.00, unit: "Paquete x12 rollos - 300 hojas/rollo", stock: 150, img_url: "https://i.postimg.cc/cJ3RHhyb/ph1.jpg" },
+            { id: 24, name: "Papel Higiénico Pétalo 100 m", category: "Papeles", price: 65.00, price_mayor: 58.00, unit: "Paquete x4 rollos - 100m/rollo", stock: 120, img_url: "https://i.postimg.cc/pTtDnjPr/ph2.jpg" },
+            { id: 25, name: "Detergente Paracas", category: "Papeles", price: 18.90, price_mayor: 16.50, unit: "Paquete x6 rollos - Doble Capa Premium", stock: 100, img_url: "https://i.postimg.cc/Y9fQNSS6/ph3.jpg" },
+            { id: 26, name: "Papel Higiénico Pétalo 13 m", category: "Papeles", price: 12.50, price_mayor: 10.90, unit: "Paquete x8 rollos - 13m/rollo", stock: 90, img_url: "https://i.postimg.cc/D0vLxKWD/ph4.jpg" },
+            { id: 27, name: "Papel Higiénico Paracas Rojo", category: "Papeles", price: 59.90, price_mayor: 53.00, unit: "Paquete x24 rollos - 400 hojas/rollo", stock: 80, img_url: "https://i.postimg.cc/SRg85tCW/ph5.jpg" },
+            { id: 28, name: "Papel Toalla Paracas Black", category: "Papeles", price: 19.50, price_mayor: 17.00, unit: "Unidad Industrial - 500m", stock: 75, img_url: "https://i.postimg.cc/sD25SsCQ/ph6.jpg" },
+            { id: 29, name: "Papel Higiénico Paracas Morado", category: "Papeles", price: 15.00, price_mayor: 13.00, unit: "Paquete x4 rollos - Con Aroma y Diseño", stock: 70, img_url: "https://i.postimg.cc/7YLS7wrm/ph7.jpg" },
+
+            // Papel Toalla (7) - Renamed by user
+            { id: 30, name: "Papel Higiénico Pétalo 40 metros", category: "Papeles", price: 17.90, price_mayor: 15.50, unit: "Paquete x3 rollos - 40m/rollo", stock: 70, img_url: "https://i.postimg.cc/vHSftkQs/ph8.jpg" },
+            { id: 31, name: "Papel Toalla Paracas Multiuso", category: "Papeles", price: 28.00, price_mayor: 24.50, unit: "Rollo Industrial - 150m", stock: 65, img_url: "https://i.postimg.cc/XYGFHLJb/ph9.jpg" },
+            { id: 32, name: "Papel Higiénico Paracas Naranja", category: "Papeles", price: 35.00, price_mayor: 31.00, unit: "Paquete x150 toallas (Dispensador Z)", stock: 60, img_url: "https://i.postimg.cc/4xDcrc7m/ph10.jpg" },
+            { id: 33, name: "Papel Higiénico Paracas Clasico", category: "Papeles", price: 42.00, price_mayor: 37.00, unit: "Rollo Gigante - 300m", stock: 55, img_url: "https://i.postimg.cc/d0GCv0r5/ph11.jpg" },
+            { id: 34, name: "Papel Higiénico Paracas Azul", category: "Papeles", price: 14.00, price_mayor: 12.00, unit: "Paquete x100 toallas (Secado Rápido)", stock: 50, img_url: "https://i.postimg.cc/pdKjxdKy/ph12.jpg" },
+            { id: 35, name: "Papel Higiénico Paracas Black", category: "Papeles", price: 21.00, price_mayor: 18.50, unit: "Paquete x6 rollos - Alta Suavidad", stock: 45, img_url: "https://i.postimg.cc/B6g1LwhK/ph13.jpg" },
+            { id: 36, name: "Papel Higiénico Paracas Institucional", category: "Papeles", price: 29.90, price_mayor: 26.00, unit: "Rollo x120 metros - Doble Capa", stock: 40, img_url: "https://i.postimg.cc/ZnsBjvzW/ph14.jpg" },
+            
+            // Productos Veesper 
+            { id: 12, name: "Toallas Higiénicas Veesper (Noche)", category: "Cuidado Personal", price: 16.90, price_mayor: 14.50, unit: "Paquete x10", stock: 100, img_url: "https://i.postimg.cc/x1FjB3W2/toallas-higienicas-1.jpg" },
+            // --- NUEVO PRODUCTO AÑADIDO POR SOLICITUD DEL USUARIO ---
+            { id: 14, name: "Toallitas Húmedas Veesper", category: "Cuidado Personal", price: 15.90, price_mayor: 12.50, unit: "Paquete x100 Hipoalergénicas", stock: 180, img_url: "https://i.postimg.cc/rpm0rmLj/toallitas-humedas.jpg" },
+            
+            { id: 3, name: "Pañales Veesper Talla RN/P", category: "Cuidado Personal", price: 59.90, price_mayor: 52.00, unit: "Paquete x60", stock: 30, img_url: "https://i.postimg.cc/Tw60xgbf/panales1.jpg" },
+            { id: 7, name: "Pañales Veesper Talla M", category: "Cuidado Personal", price: 69.90, price_mayor: 62.00, unit: "Paquete x50", stock: 35, img_url: "https://i.postimg.cc/Kjc5kbQP/panales-2.jpg" },
+            
+            // Otros Productos (Ejemplos genéricos de relleno)
+            { id: 1, name: "Detergente Líquido Genérico", category: "Limpieza", price: 29.90, price_mayor: 24.50, unit: "Bidón 5L", stock: 50, img_url: null },
+            { id: 2, name: "Atún en Trozos", category: "Conservas", price: 6.50, price_mayor: 5.80, unit: "Lata 170g", stock: 120, img_url: null },
+            { id: 4, name: "Salchicha Frankfurter", category: "Embutidos", price: 18.90, price_mayor: 16.00, unit: "Bolsa 1Kg", stock: 80, img_url: null },
+            { id: 5, name: "Aceite Vegetal", category: "Aceites", price: 8.50, price_mayor: 7.90, unit: "Botella 1L", stock: 200, img_url: null },
+        ];
+
+        let cartCount = 0;
+        const cartCountEl = document.getElementById('cart-count');
+        const categoriesGrid = document.getElementById('categories-grid');
+        const productList = document.getElementById('product-list');
+        const productListTitle = document.getElementById('product-list-title');
+        const resetFilterBtn = document.getElementById('reset-filter-btn');
+
+        // Referencias a los elementos del Header
+        const mainHeader = document.getElementById('main-header');
+        const headerContent = document.getElementById('header-content');
+        const logoImg = document.getElementById('logo-img');
+        const searchBarDesktopContainer = document.getElementById('search-bar-desktop-container');
+
+        let lastScrollY = window.scrollY;
+        const scrollThreshold = 100; // Píxeles para encoger
+        const hideThreshold = 200; // Píxeles para ocultar completamente
+        let currentFilter = 'Todos'; // Estado actual del filtro
+
+        /**
+         * Función que maneja el evento de scroll para contraer, ocultar y expandir el header.
+         */
+        function handleScroll() {
+            const currentScrollY = window.scrollY;
+            const scrollDelta = currentScrollY - lastScrollY; // Detecta la dirección y la cantidad de scroll
+            
+            // Si el scroll es 0 (arriba del todo) o si subimos, aseguramos que el header se muestre
+            if (currentScrollY === 0 || scrollDelta < 0) { 
+                mainHeader.classList.remove('header-hidden');
+            }
+            
+            // 1. Lógica de Ocultamiento (Auto-Hide)
+            // Se oculta si se desplaza hacia abajo (scrollDelta > 0) y ha pasado el umbral de ocultamiento (200px)
+            if (currentScrollY > hideThreshold && scrollDelta > 0) {
+                mainHeader.classList.add('header-hidden');
+            } 
+            
+            lastScrollY = currentScrollY;
+            
+            // 2. Lógica de Encogimiento/Expansión (Estado visual cuando es visible)
+            // Esto solo debe ocurrir si el encabezado NO está oculto
+            if (!mainHeader.classList.contains('header-hidden')) {
+
+                if (currentScrollY > scrollThreshold) {
+                    // Shrink State
+                    headerContent.classList.replace('h-36', 'h-24');
+                    logoImg.classList.replace('h-32', 'h-16');
+                    if (searchBarDesktopContainer) {
+                        searchBarDesktopContainer.classList.add('scrolled-search');
+                    }
+                } else {
+                    // Default/Expanded State
+                    headerContent.classList.replace('h-24', 'h-36');
+                    logoImg.classList.replace('h-16', 'h-32');
+                    if (searchBarDesktopContainer) {
+                        searchBarDesktopContainer.classList.remove('scrolled-search');
+                    }
+                }
+            } else {
+                // Si está oculto, mantenemos el estado encogido por si vuelve a aparecer
+                 headerContent.classList.replace('h-36', 'h-24');
+                 logoImg.classList.replace('h-16', 'h-32');
+            }
+        }
+
+        window.addEventListener('scroll', handleScroll);
+        // Llamar en la carga para asegurar el estado inicial correcto
+        handleScroll(); 
+
+        // --- Funciones del Modal (Lightbox) ---
+        const imageModal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const closeModalButton = document.getElementById('close-modal');
+        const detailName = document.getElementById('detail-name');
+        const detailUnit = document.getElementById('detail-unit');
+        const detailPriceMayor = document.getElementById('detail-price-mayor');
+
+        // Variables para manejo de Zoom (drag)
+        let isDragging = false;
+        let startX, startY;
+        let initialZoom = 1;
+        let currentZoom = initialZoom;
+
+        function openModal(imgSrc, name, unit, priceMayor) {
+            modalImage.src = imgSrc;
+            modalImage.alt = `Zoom de ${name}`;
+            
+            // Llenar los detalles del producto
+            detailName.textContent = name;
+            detailUnit.textContent = unit;
+            detailPriceMayor.textContent = `Precio Mayorista: S/ ${priceMayor.toFixed(2)}`;
+
+            imageModal.classList.remove('opacity-0', 'pointer-events-none');
+            imageModal.classList.add('opacity-100', 'pointer-events-auto');
+            document.body.style.overflow = 'hidden'; // Evita el scroll del cuerpo
+            
+            // Resetear el zoom
+            resetZoom();
+        }
+
+        function closeModal() {
+            imageModal.classList.remove('opacity-100', 'pointer-events-auto');
+            imageModal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.style.overflow = ''; // Restaura el scroll del cuerpo
+        }
+
+        function resetZoom() {
+            currentZoom = initialZoom;
+            modalImage.style.transform = `scale(${currentZoom}) translate(0px, 0px)`;
+            modalImage.style.cursor = 'grab';
+        }
+
+        closeModalButton.addEventListener('click', closeModal);
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !imageModal.classList.contains('opacity-0')) {
+                closeModal();
+            }
+        });
+
+        // ------------------ Lógica de Zoom y Drag ------------------
+        
+        // Función unificada para manejar eventos táctiles y de ratón (presionar)
+        function handleStart(e) {
+            e.preventDefault();
+            // Solo activar el arrastre si la imagen está en zoom
+            if (currentZoom > initialZoom) {
+                isDragging = true;
+                // Obtener coordenadas de inicio para ratón o primer toque
+                startX = (e.touches ? e.touches[0].clientX : e.clientX);
+                startY = (e.touches ? e.touches[0].clientY : e.clientY);
+                modalImage.style.cursor = 'grabbing';
+            }
+        }
+
+        // Función unificada para manejar eventos táctiles y de ratón (movimiento)
+        function handleMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            // Obtener coordenadas actuales
+            const currentX = (e.touches ? e.touches[0].clientX : e.clientX);
+            const currentY = (e.touches ? e.touches[0].clientY : e.clientY);
+
+            // Calcular el desplazamiento (delta)
+            const dx = currentX - startX;
+            const dy = currentY - startY;
+
+            // Obtener la transformación actual (translate)
+            const matrix = new WebKitCSSMatrix(window.getComputedStyle(modalImage).transform);
+            const translateX = matrix.m41;
+            const translateY = matrix.m42;
+
+            // Calcular las nuevas posiciones
+            const newTranslateX = translateX + dx;
+            const newTranslateY = translateY + dy;
+
+            // Aplicar la transformación de escala y traslación
+            modalImage.style.transform = `scale(${currentZoom}) translate(${newTranslateX / currentZoom}px, ${newTranslateY / currentZoom}px)`;
+
+            // Actualizar coordenadas de inicio para el próximo movimiento
+            startX = currentX;
+            startY = currentY;
+        }
+
+        // Función unificada para manejar eventos táctiles y de ratón (soltar)
+        function handleEnd() {
+            isDragging = false;
+            if (currentZoom > initialZoom) {
+                modalImage.style.cursor = 'grab';
+            }
+        }
+
+        // Zoom con rueda del ratón
+        modalImage.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const scaleFactor = 0.1;
+            const delta = e.deltaY < 0 ? scaleFactor : -scaleFactor;
+            
+            currentZoom = Math.min(Math.max(1, currentZoom + delta), 4); // Limitar zoom entre 1x y 4x
+
+            if (currentZoom === initialZoom) {
+                resetZoom();
+            } else {
+                // Mantener la posición y aplicar nueva escala
+                const matrix = new WebKitCSSMatrix(window.getComputedStyle(modalImage).transform);
+                modalImage.style.transform = `scale(${currentZoom}) translate(${matrix.m41 / matrix.m11}px, ${matrix.m42 / matrix.m11}px)`;
+                modalImage.style.cursor = 'grab';
+            }
+        });
+
+
+        // Event Listeners para Mouse y Touch
+        modalImage.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove); // Usar window para arrastrar fuera de la imagen
+        window.addEventListener('mouseup', handleEnd);
+
+        modalImage.addEventListener('touchstart', handleStart);
+        modalImage.addEventListener('touchmove', handleMove);
+        modalImage.addEventListener('touchend', handleEnd);
+
+
+        // --- Funciones de Renderizado y Carrito ---
+        
+        // Renderiza los botones de categoría, ahora con el evento onclick
+        function renderCategories() {
+            categoriesGrid.innerHTML = categories.map(cat => {
+                // Usamos el 'short_name' para la función de filtrado
+                const categoryClass = cat.short_name === currentFilter 
+                    ? `border-4 border-red-500 bg-red-50` 
+                    : `hover:bg-gray-50`;
+
+                return `
+                <a href="#products-section" onclick="filterProducts('${cat.short_name}')" class="category-card flex flex-col items-center justify-center p-4 bg-white rounded-xl product-card text-center transition duration-200 ${categoryClass}" data-category-name="${cat.short_name}">
+                    <span class="text-4xl mb-2">${cat.icon}</span>
+                    <p class="text-sm font-semibold text-gray-700">${cat.name}</p>
+                </a>
+            `;
+            }).join('');
+        }
+
+        /**
+         * Filtra los productos y actualiza la vista.
+         * @param {string} category El nombre corto de la categoría a filtrar ('Limpieza', 'Aceites', 'Todos').
+         */
+        window.filterProducts = function(category) {
+            currentFilter = category;
+            let filteredProducts;
+            let titleText;
+
+            if (category === 'Todos') {
+                filteredProducts = products;
+                titleText = 'Todos Nuestros Productos';
+                resetFilterBtn.classList.add('hidden');
+            } else {
+                // Filtrar por el nombre corto de la categoría
+                filteredProducts = products.filter(p => p.category === category);
+                // Buscar el nombre largo para el título
+                const categoryData = categories.find(c => c.short_name.includes(category));
+                titleText = `Productos en: ${categoryData ? categoryData.name : category}`;
+                resetFilterBtn.classList.remove('hidden');
+            }
+
+            productListTitle.textContent = titleText;
+            renderProductCards(filteredProducts);
+            renderCategories(); // Vuelve a renderizar para aplicar el estado visual
+            
+            // Desplazarse a la sección de productos
+            document.getElementById('products-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        function renderProductCards(productsToRender) {
+            // Si la lista de productos está vacía
+            if (productsToRender.length === 0) {
+                productList.innerHTML = `
+                    <div class="col-span-full bg-white p-6 rounded-xl shadow-lg text-center border-l-4 border-red-500">
+                        <p class="text-xl font-semibold text-gray-700">No se encontraron productos en la categoría seleccionada.</p>
+                        <p class="text-gray-500 mt-2">Intenta buscar en otra sección o haz clic en "Mostrar Todos los Productos".</p>
+                    </div>
+                `;
+                return;
+            }
+
+
+            productList.innerHTML = productsToRender.map(product => {
+                // Mapea la categoría corta del producto al objeto completo para obtener los datos de color
+                const categoryData = categories.find(c => c.short_name.includes(product.category)); 
+                const categoryColor = categoryData?.color || 'bg-gray-100 text-gray-600';
+
+                // Usar la imagen de la URL o un placeholder con el nombre
+                const imgSource = product.img_url 
+                    ? product.img_url 
+                    : `https://placehold.co/200x200/FFFFFF/333333?text=${product.name.split(' ')[0]}`;
+
+                // Generar un ID único para la imagen para referenciar el producto en JS
+                const imageId = `product-img-${product.id}`;
+
+                return `
+                <div class="group product-card bg-white p-4 rounded-xl flex flex-col justify-between shadow-lg">
+                    <!-- Imagen del Producto (Contenedor para clic) -->
+                    <div class="mb-4 flex justify-center h-48 cursor-zoom-in" 
+                        data-product='${JSON.stringify(product)}'
+                        onclick="handleImageClick(event)">
+                        <img id="${imageId}" src="${imgSource}" 
+                             onerror="this.onerror=null;this.src='https://placehold.co/200x200/FFFFFF/333333?text=Sin+Imagen';"
+                             alt="${product.name}" 
+                             class="w-full h-full object-contain rounded-lg transition-transform duration-300 transform group-hover:scale-105">
+                    </div>
+
+                    <!-- Información del Producto -->
+                    <div class="flex-grow">
+                        <span class="text-xs font-semibold ${categoryColor} px-2 py-1 rounded-full mb-2 inline-block">${product.category}</span>
+                        <h3 class="text-lg font-bold text-gray-800 mb-1">${product.name}</h3>
+                        <p class="text-sm text-gray-500 mb-3">${product.unit}</p>
+                    </div>
+
+                    <!-- Precios -->
+                    <div class="mt-auto space-y-1">
+                        <div class="flex justify-between items-end">
+                            <span class="text-xs text-gray-500 font-medium">Precio por Unidad:</span>
+                            <span class="text-xl font-bold text-gray-800">S/ ${product.price.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between items-end bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+                            <span class="text-xs text-red-600 font-bold">Precio Mayorista (x6+):</span>
+                            <span class="text-2xl font-extrabold text-red-600">S/ ${product.price_mayor.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Agregar -->
+                    <button data-product-id="${product.id}" class="btn-add mt-4 w-full py-2 text-white font-semibold rounded-lg text-sm shadow-md flex items-center justify-center space-x-2" onclick="addToCart(event)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span>Agregar al Carrito</span>
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+        
+        // Manejador de Clic en la Imagen de la Tarjeta
+        function handleImageClick(event) {
+            // Encuentra el contenedor que tiene los datos del producto
+            const container = event.currentTarget; 
+            const product = JSON.parse(container.dataset.product);
+            const imgSrc = container.querySelector('img').src;
+
+            // Si la imagen es un placeholder, no abrimos el modal
+            if (imgSrc.includes('Sin+Imagen')) {
+                showNotification(`⚠️ No hay imagen de alta calidad disponible para ${product.name}.`, 'bg-yellow-500');
+                return;
+            }
+
+            openModal(
+                imgSrc, 
+                product.name, 
+                product.unit, 
+                product.price_mayor
+            );
+        }
+
+        window.addToCart = function(event) {
+            const productId = event.currentTarget.dataset.productId;
+            const productName = products.find(p => p.id == productId)?.name || 'Producto';
+
+            cartCount++;
+            cartCountEl.textContent = cartCount;
+
+            // Simulación de notificación (en lugar de alert())
+            showNotification(`✅ "${productName}" añadido al carrito.`, 'bg-green-500');
+        }
+
+        function showNotification(message, bgColor) {
+            let notification = document.getElementById('app-notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'app-notification';
+                // Clase base y color por defecto
+                notification.className = 'fixed bottom-5 right-5 z-[9999] p-4 rounded-lg shadow-xl text-white font-semibold transition-opacity duration-300 opacity-0';
+                document.body.appendChild(notification);
+            }
+
+            // Remover colores anteriores y aplicar el nuevo
+            notification.className = notification.className.replace(/bg-[a-z]+-500/g, 'bg-gray-700');
+            notification.classList.add(bgColor);
+
+            notification.textContent = message;
+            notification.style.opacity = '1';
+
+            // Desaparecer después de 3 segundos
+            setTimeout(() => {
+                notification.style.opacity = '0';
+            }, 3000);
+        }
+
+
+        // Inicializar la página cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+            filterProducts(currentFilter); // Renderiza todos los productos al inicio
+        });
+
+    </script>
+</body>
+</html>
